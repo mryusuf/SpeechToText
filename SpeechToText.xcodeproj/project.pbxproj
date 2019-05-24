@@ -13,6 +13,12 @@
 		82023C5C22953A6600A95F0E /* SpeechToText.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 82023C5A22953A6600A95F0E /* SpeechToText.xcdatamodeld */; };
 		82023C5E22953A6800A95F0E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 82023C5D22953A6800A95F0E /* Assets.xcassets */; };
 		82023C6122953A6800A95F0E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 82023C5F22953A6800A95F0E /* LaunchScreen.storyboard */; };
+		824BB8562297E1CA00243826 /* Slt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB8532297E1CA00243826 /* Slt.framework */; };
+		824BB8572297E1CA00243826 /* OpenEars.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB8542297E1CA00243826 /* OpenEars.framework */; };
+		824BB8582297E1CA00243826 /* AcousticModelEnglish.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 824BB8552297E1CA00243826 /* AcousticModelEnglish.bundle */; };
+		824BB85C2297E2A800243826 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB85A2297E2A800243826 /* AudioToolbox.framework */; };
+		824BB85D2297E2A800243826 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB85B2297E2A800243826 /* AVFoundation.framework */; };
+		824BB8602297E3AC00243826 /* OpenEarsHeader.h in Sources */ = {isa = PBXBuildFile; fileRef = 824BB85F2297E3AC00243826 /* OpenEarsHeader.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +30,13 @@
 		82023C5D22953A6800A95F0E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		82023C6022953A6800A95F0E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		82023C6222953A6800A95F0E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		824BB8532297E1CA00243826 /* Slt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Slt.framework; sourceTree = "<group>"; };
+		824BB8542297E1CA00243826 /* OpenEars.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = OpenEars.framework; sourceTree = "<group>"; };
+		824BB8552297E1CA00243826 /* AcousticModelEnglish.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = AcousticModelEnglish.bundle; sourceTree = "<group>"; };
+		824BB85A2297E2A800243826 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
+		824BB85B2297E2A800243826 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		824BB85E2297E3AC00243826 /* SpeechToText-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SpeechToText-Bridging-Header.h"; sourceTree = "<group>"; };
+		824BB85F2297E3AC00243826 /* OpenEarsHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenEarsHeader.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,6 +44,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				824BB85C2297E2A800243826 /* AudioToolbox.framework in Frameworks */,
+				824BB85D2297E2A800243826 /* AVFoundation.framework in Frameworks */,
+				824BB8562297E1CA00243826 /* Slt.framework in Frameworks */,
+				824BB8572297E1CA00243826 /* OpenEars.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -42,6 +59,8 @@
 			children = (
 				82023C5222953A6600A95F0E /* SpeechToText */,
 				82023C5122953A6600A95F0E /* Products */,
+				824BB8522297E1CA00243826 /* Framework */,
+				824BB8592297E2A800243826 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -63,8 +82,29 @@
 				82023C5F22953A6800A95F0E /* LaunchScreen.storyboard */,
 				82023C6222953A6800A95F0E /* Info.plist */,
 				82023C5A22953A6600A95F0E /* SpeechToText.xcdatamodeld */,
+				824BB85F2297E3AC00243826 /* OpenEarsHeader.h */,
+				824BB85E2297E3AC00243826 /* SpeechToText-Bridging-Header.h */,
 			);
 			path = SpeechToText;
+			sourceTree = "<group>";
+		};
+		824BB8522297E1CA00243826 /* Framework */ = {
+			isa = PBXGroup;
+			children = (
+				824BB8532297E1CA00243826 /* Slt.framework */,
+				824BB8542297E1CA00243826 /* OpenEars.framework */,
+				824BB8552297E1CA00243826 /* AcousticModelEnglish.bundle */,
+			);
+			path = Framework;
+			sourceTree = "<group>";
+		};
+		824BB8592297E2A800243826 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				824BB85A2297E2A800243826 /* AudioToolbox.framework */,
+				824BB85B2297E2A800243826 /* AVFoundation.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -99,6 +139,7 @@
 				TargetAttributes = {
 					82023C4F22953A6600A95F0E = {
 						CreatedOnToolsVersion = 10.2.1;
+						LastSwiftMigration = 1020;
 					};
 				};
 			};
@@ -126,6 +167,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				82023C6122953A6800A95F0E /* LaunchScreen.storyboard in Resources */,
+				824BB8582297E1CA00243826 /* AcousticModelEnglish.bundle in Resources */,
 				82023C5E22953A6800A95F0E /* Assets.xcassets in Resources */,
 				82023C5922953A6600A95F0E /* Main.storyboard in Resources */,
 			);
@@ -139,6 +181,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				82023C5C22953A6600A95F0E /* SpeechToText.xcdatamodeld in Sources */,
+				824BB8602297E3AC00243826 /* OpenEarsHeader.h in Sources */,
 				82023C5622953A6600A95F0E /* ViewController.swift in Sources */,
 				82023C5422953A6600A95F0E /* AppDelegate.swift in Sources */,
 			);
@@ -286,8 +329,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				DEVELOPMENT_TEAM = DS8DA7YN5X;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Framework",
+				);
 				INFOPLIST_FILE = SpeechToText/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -295,6 +344,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yusufindracorp.SpeechToText;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SpeechToText/SpeechToText-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -304,8 +355,14 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
+				DEPLOYMENT_POSTPROCESSING = YES;
 				DEVELOPMENT_TEAM = DS8DA7YN5X;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/Framework",
+				);
 				INFOPLIST_FILE = SpeechToText/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -313,6 +370,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.yusufindracorp.SpeechToText;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SpeechToText/SpeechToText-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

@@ -34,6 +34,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Sistem akan mendeteksi percakapan dan mengubahnya menjadi teks</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Percakapan Anda akan terekam setelah menekan tombol</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
