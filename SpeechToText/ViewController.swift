@@ -7,117 +7,426 @@
 //
 
 import UIKit
-import Speech
 
-class ViewController: UIViewController, SFSpeechRecognizerDelegate {
+var words: Array<String> = []
+var currentWord: String!
 
+class ViewController: UIViewController, OEEventsObserverDelegate {
     
     @IBOutlet weak var transcriptTextView: UILabel!
     @IBOutlet weak var recordButton: UIButton!
     
-    lazy var audioEngine: AVAudioEngine = {
-        let audioEngine = AVAudioEngine()
-        return audioEngine
-    }()
+    var slt = Slt()
+    var openEarsEventsObserver = OEEventsObserver()
+    var fliteController = OEFliteController()
     
-    lazy var speechRecognizer: SFSpeechRecognizer? = {
-        if let recognizer = SFSpeechRecognizer(locale: Locale.init(identifier: "id-ID")) {
-            recognizer.delegate = self
-            return recognizer
-        }
-        else { return nil }
-    }()
-    
-    var request: SFSpeechAudioBufferRecognitionRequest?
-    var recognitionTask: SFSpeechRecognitionTask?
+    var usingStartingLanguageModel = Bool()
+    var startupFailedDueToLackOfPermissions = Bool()
+    var restartAttemptsDueToPermissionRequests = Int()
+    var pathToFirstDynamicallyGeneratedLanguageModel: String!
+    var pathToFirstDynamicallyGeneratedDictionary: String!
+    var pathToSecondDynamicallyGeneratedLanguageModel: String!
+    var pathToSecondDynamicallyGeneratedDictionary: String!
+    var timer: Timer!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         
+        self.openEarsEventsObserver.delegate = self
+        self.restartAttemptsDueToPermissionRequests = 0
+        self.startupFailedDueToLackOfPermissions = false
+        addWords()
+        let languageModelGenerator = OELanguageModelGenerator()
         
-    }
-
-
-    @IBAction func startRecord(_ sender: Any) {
-        if audioEngine.isRunning {
-            audioEngine.stop()
-            request?.endAudio()
-            recordButton.isEnabled = true
-        } else {
-            recordButton.isEnabled = false
-            try! recordAndRecognizeSpeech()
-        }
-    }
-    
-    func recordAndRecognizeSpeech() throws {
-        
-        // Cancel the previous task if it's running
-        if let recognitionTask = self.recognitionTask {
-            recognitionTask.cancel()
-            self.recognitionTask = nil
-        }
-        
-        // Create a new audio session
-        let audioSession = AVAudioSession.sharedInstance()
+        // This is the language model (vocabulary) we're going to start up with. You can replace these words with the words you want to use.
+        var arrayOfStrings: [String]?
         do {
-            try audioSession.setCategory(AVAudioSession.Category.record)
-            try audioSession.setMode(AVAudioSession.Mode.measurement)
-            try audioSession.setActive(true, options: .notifyOthersOnDeactivation)
-        }
-        catch {
+            if let path = Bundle.main.path(forResource: "dict", ofType: "txt") {
+                let data = try String(contentsOfFile:path, encoding: String.Encoding.utf8)
+                arrayOfStrings = data.components(separatedBy: "\n")
+                print(arrayOfStrings)
+            }
+        }catch {
             print (error)
         }
         
-        // Create a new live recognition request
-        request = SFSpeechAudioBufferRecognitionRequest()
         
-        let node = audioEngine.inputNode
-        guard let request = self.request else {
-            fatalError()
-        }
-        request.shouldReportPartialResults = true
-        request.contextualStrings = ["um", "uhm", "uh", "eh", "ah", "o0h", "Stark" ]
-        recognitionTask = speechRecognizer?.recognitionTask(with: request, resultHandler: { result, error in
+        let firstLanguageArray = ["backward",
+                                  "change",
+                                  "forward",
+                                  "go",
+                                  "left",
+                                  "model",
+                                  "right",
+                                  "turn"]
+        
+        let firstVocabularyName = "FirstVocabulary"
+        
+        // languageModelGenerator.verboseLanguageModelGenerator = true // Uncomment me for verbose language model generator debug output to either diagnose your issue or provide information relating to language model generation when asking for help at the forums.
+        // OELogging.startOpenEarsLogging() // If you encounter any issues, set this to true to get verbose logging output from OpenEars to either diagnose your issue or provide information when asking for help at the forums.
+        // If you encounter any Pocketsphinx-related issues, see below (after OEPocketsphinxController.sharedInstance().setActive() is called) to see how to turn on verbose Pocketsphinx logging to either diagnose your issue or provide information when asking for help at the forums.
+        
+        
+        let firstLanguageModelGenerationError: Error! = languageModelGenerator.generateLanguageModel(from: arrayOfStrings, withFilesNamed: firstVocabularyName, forAcousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish")) // Change "AcousticModelEnglish" to "AcousticModelSpanish" in order to create a language model for Spanish recognition instead of English.
+        
+        if(firstLanguageModelGenerationError != nil) {
+            print("Error while creating initial language model: \(firstLanguageModelGenerationError)")
+        } else {
+            self.pathToFirstDynamicallyGeneratedLanguageModel = languageModelGenerator.pathToSuccessfullyGeneratedLanguageModel(withRequestedName: firstVocabularyName) // these are convenience methods you can use to reference the file location of a language model that is known to have been created successfully.
+            self.pathToFirstDynamicallyGeneratedDictionary = languageModelGenerator.pathToSuccessfullyGeneratedDictionary(withRequestedName: firstVocabularyName) // these are convenience methods you can use to reference the file location of a dictionary that is known to have been created successfully.
+            self.usingStartingLanguageModel = true // Just keeping track of which model we're using.
             
-            var isFinal = false
+            // This is a model we will switch to when the user speaks "change model". The last entry, quidnunc, is an example of a word which will not be found in the lookup dictionary and will be passed to the fallback method. The fallback method is slower, so, for instance, creating a new language model from dictionary words will be pretty fast, but a model that has a lot of unusual names in it or invented/rare/recent-slang words will be slower to generate. You can use this information to give your users some UI feedback about what the expectations for wait times should be. However, on modern devices this is not expected to be a multi-second process if the vocabulary is within the supported size of 2000 words or fewer. Using "change model" as all one string in this array gives it a somewhat higher likelihood of being recognized as a phrase.
             
-            // When the recognizer returns a result, we pass it to
-            // the linguistic tagger to analyze its content.
-            if let result = result {
-                let bestString = result.bestTranscription
-                self.transcriptTextView.text = bestString.formattedString
+            let secondVocabularyName = "SecondVocabulary"
+            
+            let secondLanguageArray = ["Sunday",
+                                       "Monday",
+                                       "Tuesday",
+                                       "Wednesday",
+                                       "Thursday",
+                                       "Friday",
+                                       "Saturday",
+                                       "quidnunc",
+                                       "change model"]
+            
+            let secondLanguageModelGenerationError: Error! = languageModelGenerator.generateLanguageModel(from: secondLanguageArray, withFilesNamed: secondVocabularyName, forAcousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish")) // Change "AcousticModelEnglish" to "AcousticModelSpanish" in order to create a language model for Spanish recognition instead of English.
+            
+            if(secondLanguageModelGenerationError != nil) {
+                print("Error while creating second language model: \(secondLanguageModelGenerationError)")
+            } else {
+                self.pathToSecondDynamicallyGeneratedLanguageModel = languageModelGenerator.pathToSuccessfullyGeneratedLanguageModel(withRequestedName: secondVocabularyName)  // these are convenience methods you can use to reference the file location of a language model that is known to have been created successfully.
+                self.pathToSecondDynamicallyGeneratedDictionary = languageModelGenerator.pathToSuccessfullyGeneratedDictionary(withRequestedName: secondVocabularyName) // these are convenience methods you can use to reference the file location of a dictionary that is known to have been created successfully.
                 
-                print(bestString)
+                do {
+                    try OEPocketsphinxController.sharedInstance().setActive(true) // Setting the shared OEPocketsphinxController active is necessary before any of its properties are accessed.
+                }
+                catch {
+                    print("Error: it wasn't possible to set the shared instance to active: \"\(error)\"")
+                }
                 
+                // OEPocketsphinxController.sharedInstance().verbosePocketSphinx = true // If you encounter any issues, set this to true to get verbose logging output from OEPocketsphinxController to either diagnose your issue or provide information when asking for help at the forums.
                 
-                isFinal = result.isFinal
+                if(!OEPocketsphinxController.sharedInstance().isListening) {
+                    OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false)
+                }
+                startDisplayingLevels()
+                
+                // Here is some UI stuff that has nothing specifically to do with OpenEars implementation
+//                self.startButton.isHidden = true
+//                self.stopButton.isHidden = true
+//                self.suspendListeningButton.isHidden = true
+//                self.resumeListeningButton.isHidden = true
             }
-            if error != nil || isFinal {
-                self.audioEngine.stop()
-                node.removeTap(onBus: 0)
+        }
+        
+    }
+
+    func pocketsphinxDidReceiveHypothesis(_ hypothesis: String!, recognitionScore: String!, utteranceID: String!) {
+        print("Local callback: The received hypothesis is \(hypothesis!) with a score of \(recognitionScore!) and an ID of \(utteranceID!)") // Log it.
+        transcriptTextView.text = hypothesis!
+        if(hypothesis! == "change model") { // If the user says "change model", we will switch to the alternate model (which happens to be the dynamically generated model).
+            
+            // Here is an example of language model switching in OpenEars. Deciding on what logical basis to switch models is your responsibility.
+            // For instance, when you call a customer service line and get a response tree that takes you through different options depending on what you say to it,
+            // the models are being switched as you progress through it so that only relevant choices can be understood. The construction of that logical branching and
+            // how to react to it is your job OpenEars just lets you send the signal to switch the language model when you've decided it's the right time to do so.
+            
+            if(self.usingStartingLanguageModel) { // If we're on the starting model, switch to the dynamically generated one.
+                OEPocketsphinxController.sharedInstance().changeLanguageModel(toFile: self.pathToSecondDynamicallyGeneratedLanguageModel, withDictionary:self.pathToSecondDynamicallyGeneratedDictionary)
+                self.usingStartingLanguageModel = false
                 
-                self.request = nil
-                self.recognitionTask = nil
+            } else { // If we're on the dynamically generated model, switch to the start model (this is an example of a trigger and method for switching models).
+                OEPocketsphinxController.sharedInstance().changeLanguageModel(toFile: self.pathToFirstDynamicallyGeneratedLanguageModel, withDictionary:self.pathToFirstDynamicallyGeneratedDictionary)
+                self.usingStartingLanguageModel = true
             }
-        })
+        }
         
+//        self.heardTextView.text = "Heard: \"\(hypothesis!)\""
         
-        let recordingFormat = node.outputFormat(forBus: 0)
-        node.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat ) { (buffer: AVAudioPCMBuffer, when: AVAudioTime) in self.request?.append(buffer)
-        }
-        audioEngine.prepare()
-        do {
-            try audioEngine.start()
-        } catch {
-            return print(error)
-        }
-        guard let myRecognizer = SFSpeechRecognizer() else {
-            return
-        }
-        if !myRecognizer.isAvailable {
-            return
+        // This is how to use an available instance of OEFliteController. We're going to repeat back the command that we heard with the voice we've chosen.
+//        self.fliteController.say(_:"You said \(hypothesis!)", with:self.slt)
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that the interruption to the audio session ended.
+    func audioSessionInterruptionDidEnd() {
+        print("Local callback:  AudioSession interruption ended.") // Log it.
+//        self.statusTextView.text = "Status: AudioSession interruption ended." // Show it in the status box.
+        // We're restarting the previously-stopped listening loop.
+        if(!OEPocketsphinxController.sharedInstance().isListening){
+            OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false)
+            
         }
     }
+    
+    // An optional delegate method of OEEventsObserver which informs that the audio input became unavailable.
+    func audioInputDidBecomeUnavailable() {
+        print("Local callback:  The audio input has become unavailable") // Log it.
+//        self.statusTextView.text = "Status: The audio input has become unavailable" // Show it in the status box.
+        
+        if(OEPocketsphinxController.sharedInstance().isListening){
+            let stopListeningError: Error! = OEPocketsphinxController.sharedInstance().stopListening() // React to it by telling Pocketsphinx to stop listening since there is no available input (but only if we are listening).
+            if(stopListeningError != nil) {
+                print("Error while stopping listening in audioInputDidBecomeUnavailable: \(stopListeningError)")
+            }
+        }
+        
+        // An optional delegate method of OEEventsObserver which informs that the unavailable audio input became available again.
+        func audioInputDidBecomeAvailable() {
+            print("Local callback: The audio input is available") // Log it.
+//            self.statusTextView.text = "Status: The audio input is available" // Show it in the status box.
+            if(!OEPocketsphinxController.sharedInstance().isListening) {
+                OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false) // Start speech recognition, but only if we aren't already listening.
+            }
+        }
+        // An optional delegate method of OEEventsObserver which informs that there was a change to the audio route (e.g. headphones were plugged in or unplugged).
+        func audioRouteDidChange(toRoute newRoute: String!) {
+            print("Local callback: Audio route change. The new audio route is \(newRoute)") // Log it.
+//            self.statusTextView.text = "Status: Audio route change. The new audio route is \(newRoute)"// Show it in the status box.
+            let stopListeningError: Error! = OEPocketsphinxController.sharedInstance().stopListening() // React to it by telling Pocketsphinx to stop listening since there is no available input (but only if we are listening).
+            if(stopListeningError != nil) {
+                print("Error while stopping listening in audioInputDidBecomeAvailable: \(stopListeningError)")
+            }
+        }
+        
+        
+        
+        
+        if(!OEPocketsphinxController.sharedInstance().isListening) {
+            OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false) // Start speech recognition, but only if we aren't already listening.
+        }
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that the Pocketsphinx recognition loop has entered its actual loop.
+    // This might be useful in debugging a conflict between another sound class and Pocketsphinx.
+    func pocketsphinxRecognitionLoopDidStart() {
+        
+        print("Local callback: Pocketsphinx started.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx started." // Show it in the status box.
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Pocketsphinx is now listening for speech.
+    func pocketsphinxDidStartListening() {
+        
+        print("Local callback: Pocketsphinx is now listening.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx is now listening." // Show it in the status box.
+//
+//        self.startButton.isHidden = true // React to it with some UI changes.
+//        self.stopButton.isHidden = false
+//        self.suspendListeningButton.isHidden = false
+//        self.resumeListeningButton.isHidden = true
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Pocketsphinx detected speech and is starting to process it.
+    func pocketsphinxDidDetectSpeech() {
+        print("Local callback: Pocketsphinx has detected speech.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx has detected speech." // Show it in the status box.
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Pocketsphinx detected a second of silence, indicating the end of an utterance.
+    // This was added because developers requested being able to time the recognition speed without the speech time. The processing time is the time between
+    // this method being called and the hypothesis being returned.
+    func pocketsphinxDidDetectFinishedSpeech() {
+        print("Local callback: Pocketsphinx has detected a second of silence, concluding an utterance.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx has detected finished speech." // Show it in the status box.
+    }
+    
+    
+    // An optional delegate method of OEEventsObserver which informs that Pocketsphinx has exited its recognition loop, most
+    // likely in response to the OEPocketsphinxController being told to stop listening via the stopListening method.
+    func pocketsphinxDidStopListening() {
+        print("Local callback: Pocketsphinx has stopped listening.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx has stopped listening." // Show it in the status box.
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Pocketsphinx is still in its listening loop but it is not
+    // Going to react to speech until listening is resumed.  This can happen as a result of Flite speech being
+    // in progress on an audio route that doesn't support simultaneous Flite speech and Pocketsphinx recognition,
+    // or as a result of the OEPocketsphinxController being told to suspend recognition via the suspendRecognition method.
+    func pocketsphinxDidSuspendRecognition() {
+        print("Local callback: Pocketsphinx has suspended recognition.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx has suspended recognition." // Show it in the status box.
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Pocketsphinx is still in its listening loop and after recognition
+    // having been suspended it is now resuming.  This can happen as a result of Flite speech completing
+    // on an audio route that doesn't support simultaneous Flite speech and Pocketsphinx recognition,
+    // or as a result of the OEPocketsphinxController being told to resume recognition via the resumeRecognition method.
+    func pocketsphinxDidResumeRecognition() {
+        print("Local callback: Pocketsphinx has resumed recognition.") // Log it.
+//        self.statusTextView.text = "Status: Pocketsphinx has resumed recognition." // Show it in the status box.
+    }
+    
+    // An optional delegate method which informs that Pocketsphinx switched over to a new language model at the given URL in the course of
+    // recognition. This does not imply that it is a valid file or that recognition will be successful using the file.
+    func pocketsphinxDidChangeLanguageModel(toFile newLanguageModelPathAsString: String!, andDictionary newDictionaryPathAsString: String!) {
+        
+        print("Local callback: Pocketsphinx is now using the following language model: \n\(newLanguageModelPathAsString!) and the following dictionary: \(newDictionaryPathAsString!)")
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Flite is speaking, most likely to be useful if debugging a
+    // complex interaction between sound classes. You don't have to do anything yourself in order to prevent Pocketsphinx from listening to Flite talk and trying to recognize the speech.
+    func fliteDidStartSpeaking() {
+        print("Local callback: Flite has started speaking") // Log it.
+//        self.statusTextView.text = "Status: Flite has started speaking." // Show it in the status box.
+    }
+    
+    // An optional delegate method of OEEventsObserver which informs that Flite is finished speaking, most likely to be useful if debugging a
+    // complex interaction between sound classes.
+    func fliteDidFinishSpeaking() {
+        print("Local callback: Flite has finished speaking") // Log it.
+//        self.statusTextView.text = "Status: Flite has finished speaking." // Show it in the status box.
+    }
+    
+    func pocketSphinxContinuousSetupDidFail(withReason reasonForFailure: String!) { // This can let you know that something went wrong with the recognition loop startup. Turn on [OELogging startOpenEarsLogging] to learn why.
+        print("Local callback: Setting up the continuous recognition loop has failed for the reason \(reasonForFailure), please turn on OELogging.startOpenEarsLogging() to learn more.") // Log it.
+//        self.statusTextView.text = "Status: Not possible to start recognition loop." // Show it in the status box.
+    }
+    
+    func pocketSphinxContinuousTeardownDidFail(withReason reasonForFailure: String!) { // This can let you know that something went wrong with the recognition loop startup. Turn on [OELogging startOpenEarsLogging] to learn why.
+        print("Local callback: Tearing down the continuous recognition loop has failed for the reason %, please turn on [OELogging startOpenEarsLogging] to learn more.", reasonForFailure) // Log it.
+//        self.statusTextView.text = "Status: Not possible to cleanly end recognition loop." // Show it in the status box.
+    }
+    
+    func testRecognitionCompleted() { // A test file which was submitted for direct recognition via the audio driver is done.
+        print("Local callback: A test file which was submitted for direct recognition via the audio driver is done.") // Log it.
+        if(OEPocketsphinxController.sharedInstance().isListening) { // If we're listening, stop listening.
+            let stopListeningError: Error! = OEPocketsphinxController.sharedInstance().stopListening()
+            if(stopListeningError != nil) {
+                print("Error while stopping listening in testRecognitionCompleted: \(stopListeningError)")
+            }
+        }
+        
+    }
+    /** Pocketsphinx couldn't start because it has no mic permissions (will only be returned on iOS7 or later).*/
+    func pocketsphinxFailedNoMicPermissions() {
+        print("Local callback: The user has never set mic permissions or denied permission to this app's mic, so listening will not start.")
+        self.startupFailedDueToLackOfPermissions = true
+        if(OEPocketsphinxController.sharedInstance().isListening){
+            let stopListeningError: Error! = OEPocketsphinxController.sharedInstance().stopListening()
+            if(stopListeningError != nil) {
+                print("Error while stopping listening in pocketsphinxFailedNoMicPermissions: \(stopListeningError). Will try again in 10 seconds.")
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + .seconds(10), execute: {
+            if(!OEPocketsphinxController.sharedInstance().isListening) {
+                OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false) // Start speech recognition, but only if we aren't already listening.
+            }
+        })
+    }
+    
+    func addWords() {
+        //add any thing here that you want to be recognized. Must be in capital letters
+        words.append("UM")
+        words.append("EH")
+        words.append("OH")
+        words.append("EEH")
+    }
+    
+    
+    /** The user prompt to get mic permissions, or a check of the mic permissions, has completed with a true or a false result  (will only be returned on iOS7 or later).*/
+    
+    func micPermissionCheckCompleted(withResult: Bool) {
+        if(withResult) {
+            
+            self.restartAttemptsDueToPermissionRequests += 1
+            if(self.restartAttemptsDueToPermissionRequests == 1 && self.startupFailedDueToLackOfPermissions) { // If we get here because there was an attempt to start which failed due to lack of permissions, and now permissions have been requested and they returned true, we restart exactly once with the new permissions.
+                
+                if(!OEPocketsphinxController.sharedInstance().isListening) {
+                    OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false) // Start speech recognition, but only if we aren't already listening.
+                }
+                
+                self.startupFailedDueToLackOfPermissions = false
+            }
+        }
+        
+    }
+    
+    
+    
+    // This is not OpenEars-specific stuff, just some UI behavior
+    
+    @IBAction func suspendListeningButtonAction() { // This is the action for the button which suspends listening without ending the recognition loop
+        
+        
+        OEPocketsphinxController.sharedInstance().suspendRecognition()
+        
+//        self.startButton.isHidden = true
+//        self.stopButton.isHidden = false
+//        self.suspendListeningButton.isHidden = true
+//        self.resumeListeningButton.isHidden = false
+    }
+    
+    @IBAction func resumeListeningButtonAction() { // This is the action for the button which resumes listening if it has been suspended
+        OEPocketsphinxController.sharedInstance().resumeRecognition()
+        
+//        self.startButton.isHidden = true
+//        self.stopButton.isHidden = false
+//        self.suspendListeningButton.isHidden = false
+//        self.resumeListeningButton.isHidden = true
+    }
+    
+    @IBAction func stopButtonAction() { // This is the action for the button which shuts down the recognition loop.
+        if(OEPocketsphinxController.sharedInstance().isListening){
+            let stopListeningError: Error! = OEPocketsphinxController.sharedInstance().stopListening()
+            if(stopListeningError != nil) {
+                print("Error while stopping listening in pocketsphinxFailedNoMicPermissions: \(stopListeningError)")
+            }
+        }
+//        self.startButton.isHidden = false
+//        self.stopButton.isHidden = true
+//        self.suspendListeningButton.isHidden = true
+//        self.resumeListeningButton.isHidden = true
+    }
+    
+    @IBAction func startButtonAction() { // This is the action for the button which starts up the recognition loop again if it has been shut down.
+        
+//        self.startButton.isHidden = true
+//        self.stopButton.isHidden = false
+//        self.suspendListeningButton.isHidden = false
+//        self.resumeListeningButton.isHidden = true
+    }
+    
+    
+    // What follows are not OpenEars methods, just an approach for level reading
+    // that I've included with this sample app. My example implementation does make use of two OpenEars
+    // methods:    the pocketsphinxInputLevel method of OEPocketsphinxController and the fliteOutputLevel
+    // method of OEFliteController.
+    //
+    // The example is meant to show one way that you can read those levels continuously without locking the UI,
+    // by using an NSTimer, but the OpenEars level-reading methods
+    // themselves do not include multithreading code since I believe that you will want to design your own
+    // code approaches for level display that are tightly-integrated with your interaction design and the
+    // graphics API you choose.
+    //
+    // Please note that if you use my sample approach, you should pay attention to the way that the timer is always stopped in
+    // dealloc. This should prevent you from having any difficulties with deallocating a class due to a running NSTimer process.
+    
+    func startDisplayingLevels() { // Start displaying the levels using a timer
+        if(self.timer != nil) {
+            self.timer.invalidate()
+        }
+        // start the timer
+        self.timer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(updateLevelsUI), userInfo: nil, repeats: true)
+        
+    }
+    
+    
+    
+    @objc func updateLevelsUI() { // And here is how we obtain the levels.  This method includes the actual OpenEars methods and uses their results to update the UI of this view controller.
+        
+//        self.pocketsphinxDbLabel.text = "Pocketsphinx Input level: \(OEPocketsphinxController.sharedInstance().pocketsphinxInputLevel)"//pocketsphinxInputLevel is an OpenEars method of the class OEPocketsphinxController.
+        
+        if(self.fliteController.speechInProgress) {
+//            self.fliteDbLabel.text = "Flite Output level: \(self.fliteController.fliteOutputLevel)" // fliteOutputLevel is an OpenEars method of the class OEFliteController.
+        }
+    }
+    @IBAction func startRecord(_ sender: Any) {
+        if(!OEPocketsphinxController.sharedInstance().isListening) {
+            OEPocketsphinxController.sharedInstance().startListeningWithLanguageModel(atPath: self.pathToFirstDynamicallyGeneratedLanguageModel, dictionaryAtPath: self.pathToFirstDynamicallyGeneratedDictionary, acousticModelAtPath: OEAcousticModel.path(toModel: "AcousticModelEnglish"), languageModelIsJSGF: false) // Start speech recognition, but only if we aren't already listening.
+        }
+    }
+    
 }
 

@@ -13,6 +13,9 @@
 		82023C5C22953A6600A95F0E /* SpeechToText.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 82023C5A22953A6600A95F0E /* SpeechToText.xcdatamodeld */; };
 		82023C5E22953A6800A95F0E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 82023C5D22953A6800A95F0E /* Assets.xcassets */; };
 		82023C6122953A6800A95F0E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 82023C5F22953A6800A95F0E /* LaunchScreen.storyboard */; };
+		820E4039229BD33200E3A6C7 /* Dict.swift in Sources */ = {isa = PBXBuildFile; fileRef = 820E4038229BD33200E3A6C7 /* Dict.swift */; };
+		820E403B229BD7DB00E3A6C7 /* dict.json in Resources */ = {isa = PBXBuildFile; fileRef = 820E403A229BD7DB00E3A6C7 /* dict.json */; };
+		820E403D229BDB5800E3A6C7 /* dict.txt in Resources */ = {isa = PBXBuildFile; fileRef = 820E403C229BDB5800E3A6C7 /* dict.txt */; };
 		824BB8562297E1CA00243826 /* Slt.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB8532297E1CA00243826 /* Slt.framework */; };
 		824BB8572297E1CA00243826 /* OpenEars.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB8542297E1CA00243826 /* OpenEars.framework */; };
 		824BB8582297E1CA00243826 /* AcousticModelEnglish.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 824BB8552297E1CA00243826 /* AcousticModelEnglish.bundle */; };
@@ -30,6 +33,9 @@
 		82023C5D22953A6800A95F0E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		82023C6022953A6800A95F0E /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		82023C6222953A6800A95F0E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		820E4038229BD33200E3A6C7 /* Dict.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Dict.swift; sourceTree = "<group>"; };
+		820E403A229BD7DB00E3A6C7 /* dict.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = dict.json; sourceTree = "<group>"; };
+		820E403C229BDB5800E3A6C7 /* dict.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = dict.txt; sourceTree = "<group>"; };
 		824BB8532297E1CA00243826 /* Slt.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Slt.framework; sourceTree = "<group>"; };
 		824BB8542297E1CA00243826 /* OpenEars.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = OpenEars.framework; sourceTree = "<group>"; };
 		824BB8552297E1CA00243826 /* AcousticModelEnglish.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = AcousticModelEnglish.bundle; sourceTree = "<group>"; };
@@ -84,6 +90,9 @@
 				82023C5A22953A6600A95F0E /* SpeechToText.xcdatamodeld */,
 				824BB85F2297E3AC00243826 /* OpenEarsHeader.h */,
 				824BB85E2297E3AC00243826 /* SpeechToText-Bridging-Header.h */,
+				820E4038229BD33200E3A6C7 /* Dict.swift */,
+				820E403A229BD7DB00E3A6C7 /* dict.json */,
+				820E403C229BDB5800E3A6C7 /* dict.txt */,
 			);
 			path = SpeechToText;
 			sourceTree = "<group>";
@@ -170,6 +179,8 @@
 				824BB8582297E1CA00243826 /* AcousticModelEnglish.bundle in Resources */,
 				82023C5E22953A6800A95F0E /* Assets.xcassets in Resources */,
 				82023C5922953A6600A95F0E /* Main.storyboard in Resources */,
+				820E403D229BDB5800E3A6C7 /* dict.txt in Resources */,
+				820E403B229BD7DB00E3A6C7 /* dict.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -182,6 +193,7 @@
 			files = (
 				82023C5C22953A6600A95F0E /* SpeechToText.xcdatamodeld in Sources */,
 				824BB8602297E3AC00243826 /* OpenEarsHeader.h in Sources */,
+				820E4039229BD33200E3A6C7 /* Dict.swift in Sources */,
 				82023C5622953A6600A95F0E /* ViewController.swift in Sources */,
 				82023C5422953A6600A95F0E /* AppDelegate.swift in Sources */,
 			);
@@ -338,6 +350,7 @@
 					"$(PROJECT_DIR)/Framework",
 				);
 				INFOPLIST_FILE = SpeechToText/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -346,7 +359,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "SpeechToText/SpeechToText-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
@@ -364,6 +377,7 @@
 					"$(PROJECT_DIR)/Framework",
 				);
 				INFOPLIST_FILE = SpeechToText/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -371,7 +385,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.yusufindracorp.SpeechToText;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "SpeechToText/SpeechToText-Bridging-Header.h";
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
