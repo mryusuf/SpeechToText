@@ -22,6 +22,7 @@
 		824BB85C2297E2A800243826 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB85A2297E2A800243826 /* AudioToolbox.framework */; };
 		824BB85D2297E2A800243826 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 824BB85B2297E2A800243826 /* AVFoundation.framework */; };
 		824BB8602297E3AC00243826 /* OpenEarsHeader.h in Sources */ = {isa = PBXBuildFile; fileRef = 824BB85F2297E3AC00243826 /* OpenEarsHeader.h */; };
+		8258AA5D229C6D5100F712F3 /* AcousticModelAlternateEnglish1.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 8258AA5C229C6D5100F712F3 /* AcousticModelAlternateEnglish1.bundle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -43,6 +44,7 @@
 		824BB85B2297E2A800243826 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		824BB85E2297E3AC00243826 /* SpeechToText-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SpeechToText-Bridging-Header.h"; sourceTree = "<group>"; };
 		824BB85F2297E3AC00243826 /* OpenEarsHeader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OpenEarsHeader.h; sourceTree = "<group>"; };
+		8258AA5C229C6D5100F712F3 /* AcousticModelAlternateEnglish1.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = AcousticModelAlternateEnglish1.bundle; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,7 @@
 		824BB8522297E1CA00243826 /* Framework */ = {
 			isa = PBXGroup;
 			children = (
+				8258AA5C229C6D5100F712F3 /* AcousticModelAlternateEnglish1.bundle */,
 				824BB8532297E1CA00243826 /* Slt.framework */,
 				824BB8542297E1CA00243826 /* OpenEars.framework */,
 				824BB8552297E1CA00243826 /* AcousticModelEnglish.bundle */,
@@ -175,6 +178,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8258AA5D229C6D5100F712F3 /* AcousticModelAlternateEnglish1.bundle in Resources */,
 				82023C6122953A6800A95F0E /* LaunchScreen.storyboard in Resources */,
 				824BB8582297E1CA00243826 /* AcousticModelEnglish.bundle in Resources */,
 				82023C5E22953A6800A95F0E /* Assets.xcassets in Resources */,
